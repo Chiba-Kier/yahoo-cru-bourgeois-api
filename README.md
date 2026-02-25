@@ -19,8 +19,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 1.2. Yahoo! Application ID の設定
-このAPIの実行には、Yahoo!ショッピングAPIの **Client ID (Application ID)** が必要です。
+### 1.2. Yahoo! Application ID の設定  
+このAPIの実行には、Yahoo!ショッピングAPIの **Client ID (Application ID)** が必要です。  
+※[商品検索v3](https://developer.yahoo.co.jp/webapi/shopping/v3/itemsearch.html)を利用しています。
 
 1. [Yahoo!デベロッパーネットワーク](https://developer.yahoo.co.jp/)でアプリケーションを登録し、IDを取得します。
 2. プロジェクト直下の `.env` ファイルに、IDを以下の形式で保存してください。
@@ -87,4 +88,5 @@ curl "http://localhost:8000/search?min_price=0&max_price=2500"
 このプロジェクトは [MIT License](LICENSE) の下で公開されています。
 
 ---
-**注意**: 本ツールは個人の利用を目的としており、Yahoo!ショッピングAPIの[利用規約](https://developer.yahoo.co.jp/appendix/usage/terms.html)を遵守して使用してください（1秒間に1リクエストの制限を自動で適用しています）。
+
+**注意**: 本ツールは個人の利用を目的としており、Yahoo!ショッピングAPIの[利用約款](https://developer.yahoo.co.jp/webapi/shopping/api_contract.html)を遵守して使用してください（1秒間に1リクエストの制限を自動で適用しています）。
