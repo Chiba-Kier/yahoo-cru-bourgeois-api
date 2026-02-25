@@ -1,5 +1,5 @@
 import pandas as pd
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import os
 import glob
 
@@ -7,35 +7,56 @@ class DataManager:
     def __init__(self, data_root: str = "data"):
         self.data_root = data_root
 
-    def load_master_data(self, classification: str) -> List[Dict[str, Any]]:
+    def get_all_classifications(self) -> List[str]:
         """
-        Reads all CSV files within a classification folder (e.g., 'data/cru_bourgeois/*.csv')
-        and merges them into a single list of records.
+        Lists all classification directories in the data root.
         """
-        folder_path = os.path.join(self.data_root, classification)
-        if not os.path.exists(folder_path):
-            raise FileNotFoundError(f"Classification folder not found: {folder_path}")
+        if not os.path.exists(self.data_root):
+            return []
+        return [
+            d for d in os.listdir(self.data_root) 
+            if os.path.isdir(os.path.join(self.data_root, d))
+        ]
 
-        csv_files = glob.glob(os.path.join(folder_path, "*.csv"))
+    def load_master_data(self, classification: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Reads all CSV files within a classification folder or all folders if None.
+        """
+        if classification:
+            folders = [os.path.join(self.data_root, classification)]
+        else:
+            folders = [os.path.join(self.data_root, d) for d in self.get_all_classifications()]
+
         all_records = []
 
-        for file_path in csv_files:
-            df = pd.read_csv(file_path)
-            # Add metadata from file name (e.g., certification year)
-            year = os.path.splitext(os.path.basename(file_path))[0]
-            df["source_year"] = year
-            
-            # Clean data
-            df = df.map(lambda x: x.strip() if isinstance(x, str) else x)
-            df = df.where(pd.notnull(df), None)
-            
-            all_records.extend(df.to_dict(orient="records"))
+        for folder_path in folders:
+            if not os.path.exists(folder_path):
+                if classification: # Only raise if specific classification was requested
+                    raise FileNotFoundError(f"Classification folder not found: {folder_path}")
+                continue
+
+            csv_files = glob.glob(os.path.join(folder_path, "*.csv"))
+            # Get classification name from folder path for record tagging
+            current_classification = os.path.basename(folder_path)
+
+            for file_path in csv_files:
+                df = pd.read_csv(file_path)
+                # Add metadata from file name (e.g., certification year)
+                year = os.path.splitext(os.path.basename(file_path))[0]
+                df["source_year"] = year
+                df["classification"] = current_classification
+                
+                # Clean data
+                df = df.map(lambda x: x.strip() if isinstance(x, str) else x)
+                df = df.where(pd.notnull(df), None)
+                
+                all_records.extend(df.to_dict(orient="records"))
         
         return all_records
 
-    def get_search_tasks(self, classification: str = "cru_bourgeois") -> List[Dict[str, Any]]:
+    def get_search_tasks(self, classification: Optional[str] = None) -> List[Dict[str, Any]]:
         """
-        Prepares search tasks for a given classification.
+        Prepares search tasks for a given classification or all classifications.
         """
         master_data = self.load_master_data(classification)
         tasks = []
@@ -47,7 +68,8 @@ class DataManager:
                 "original_name": entry.get("chateau_name"),
                 "query": query,
                 "appellation": entry.get("appellation"),
-                "year": entry.get("source_year")
+                "year": entry.get("source_year"),
+                "classification": entry.get("classification")
             })
             
         return tasks

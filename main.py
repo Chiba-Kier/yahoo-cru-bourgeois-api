@@ -21,14 +21,15 @@ except Exception as e:
 def read_root():
     return {"message": "Wine Classification Search API is running"}
 
+@app.get("/search")
 @app.get("/search/{classification}")
 def search_wine_classification(
-    classification: str = Path(..., description="格付け名 (例: cru_bourgeois, saint_emilion)"),
+    classification: Optional[str] = None,
     min_price: Optional[int] = Query(None, description="最低価格 (JPY)"),
     max_price: Optional[int] = Query(None, description="最高価格 (JPY)"),
 ):
     """
-    指定した格付けフォルダ内の全ての銘柄をYahoo!ショッピングで検索します。
+    指定した格付け、または全ての銘柄をYahoo!ショッピングで検索します。
     """
     if not yahoo_client:
         raise HTTPException(status_code=500, detail="Yahoo! Client not initialized.")
@@ -47,6 +48,7 @@ def search_wine_classification(
             
             results.append({
                 "chateau": task["original_name"],
+                "classification": task.get("classification"),
                 "certification_year": task["year"],
                 "query_used": task["query"],
                 "hit_count": len(hits),
@@ -61,7 +63,7 @@ def search_wine_classification(
             })
 
         return {
-            "classification": classification,
+            "classification": classification or "all",
             "total_chateaux": len(tasks),
             "search_results": results
         }
