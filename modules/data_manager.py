@@ -48,7 +48,8 @@ class DataManager:
                 
                 # Clean data
                 df = df.map(lambda x: x.strip() if isinstance(x, str) else x)
-                df = df.where(pd.notnull(df), None)
+                # Replace NaN with None for better JSON/Dictionary handling
+                df = df.replace({pd.NA: None, float('nan'): None})
                 
                 all_records.extend(df.to_dict(orient="records"))
         
@@ -62,10 +63,20 @@ class DataManager:
         tasks = []
         
         for entry in master_data:
-            query = entry.get("search_name_kana") or entry.get("search_name_ascii") or entry.get("chateau_name")
+            # Safely get values, defaulting to empty string if None
+            search_kana = entry.get("search_name_kana") or ""
+            search_ascii = entry.get("search_name_ascii") or ""
+            chateau_name = entry.get("chateau_name") or ""
+            
+            # Pick the first non-empty string
+            query = search_kana or search_ascii or chateau_name
+            
+            # If still empty or just "nan" string (safeguard), skip or use a fallback
+            if not query or str(query).lower() == "nan":
+                continue
             
             tasks.append({
-                "original_name": entry.get("chateau_name"),
+                "original_name": chateau_name,
                 "query": query,
                 "appellation": entry.get("appellation"),
                 "year": entry.get("source_year"),

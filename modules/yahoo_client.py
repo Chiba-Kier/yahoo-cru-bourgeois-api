@@ -21,15 +21,14 @@ class YahooShoppingClient:
         query: str, 
         min_price: Optional[int] = None, 
         max_price: Optional[int] = None,
-        results: int = 20
+        results: int = 20,
+        max_retries: int = 5
     ) -> List[Dict[str, Any]]:
         """
         Searches for items on Yahoo! Shopping.
         Adheres to the 1 QPS rate limit by sleeping before the request.
+        Uses exponential backoff for 429 errors.
         """
-        # Rate limiting: 1 QPS
-        time.sleep(1)
-
         params = {
             "appid": self.client_id,
             "query": query,
@@ -42,17 +41,29 @@ class YahooShoppingClient:
         if max_price is not None:
             params["price_to"] = max_price
 
-        response = requests.get(self.BASE_URL, params=params)
-        
-        if response.status_code == 429:
-            # Handle rate limit explicitly if 1s sleep wasn't enough
-            time.sleep(2)
+        for attempt in range(max_retries):
+            # Base rate limiting: 1 QPS
+            time.sleep(1)
+            
             response = requests.get(self.BASE_URL, params=params)
+            
+            if response.status_code == 429:
+                wait_time = (2 ** attempt) + 1 # Exponential backoff: 2, 3, 5, 9, 17...
+                print(f"Rate limit hit (429). Retrying in {wait_time}s... (Attempt {attempt + 1}/{max_retries})")
+                time.sleep(wait_time)
+                continue
+            
+            try:
+                response.raise_for_status()
+                data = response.json()
+                return data.get("hits", [])
+            except requests.exceptions.HTTPError as e:
+                if attempt == max_retries - 1:
+                    raise e
+                print(f"HTTP Error: {e}. Retrying...")
+                time.sleep(2)
 
-        response.raise_for_status()
-        data = response.json()
-
-        return data.get("hits", [])
+        return []
 
 if __name__ == "__main__":
     # Quick manual test
