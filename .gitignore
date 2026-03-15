@@ -1,6 +1,39 @@
 GEMINI.md
 docs/
 
+# =========================
+# Terraform
+# =========================
+# ローカルのTerraform作業ディレクトリ（プロバイダーのバイナリなどが入っているため重い）
+**/.terraform/*
+
+# Terraformのステータスファイル（インフラの構成情報や、場合によってはシークレットが平文で含まれるため【絶対に】除外）
+*.tfstate
+*.tfstate.*
+
+# クラッシュログ
+crash.log
+crash.*.log
+
+# 変数定義ファイル（パスワードやAPIキーなどの機密情報を書くことが多いため除外）
+*.tfvars
+*.tfvars.json
+
+# ローカル用の上書き設定ファイル
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform planの出力結果
+*tfplan*
+
+# =========================
+# AWS Lambda (今後のため)
+# =========================
+# デプロイパッケージとして作成するZIPファイルを除外
+*.zip
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
