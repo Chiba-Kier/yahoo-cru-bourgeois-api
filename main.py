@@ -38,29 +38,57 @@ def search_wine_classification(
         tasks = data_manager.get_search_tasks(classification)
         results = []
 
-        for task in tasks:
-            # Perform search
+        # 5件ずつに分割して処理
+        chunk_size = 5
+        for i in range(0, len(tasks), chunk_size):
+            chunk = tasks[i : i + chunk_size]
+            
+            # Yahoo! API の OR 検索は '|' を使用します
+            # 例: (シャトー A) | (シャトー B) | (シャトー C)
+            combined_query = " | ".join([f'({t["query"]})' for t in chunk])
+            
+            # まとめて検索
             hits = yahoo_client.search_items(
-                query=task["query"],
+                query=combined_query,
                 min_price=min_price,
-                max_price=max_price
+                max_price=max_price,
+                results=100
             )
             
-            results.append({
-                "chateau": task["original_name"],
-                "classification": task.get("classification"),
-                "certification_year": task["year"],
-                "query_used": task["query"],
-                "hit_count": len(hits),
-                "items": [
-                    {
-                        "name": h.get("name"),
-                        "price": h.get("price"),
-                        "url": h.get("url"),
-                        "store": h.get("store", {}).get("name")
-                    } for h in hits
-                ]
-            })
+            # 各シャトーごとに結果を振り分け
+            for task in chunk:
+                # CSVの表記そのままの検索クエリを使用（小文字化のみ）
+                # 単語分割はせず、商品名にこの文字列がそのまま含まれているかを確認します
+                search_query = task["query"].lower()
+                matched_items = []
+                
+                for h in hits:
+                    item_name = h.get("name", "").lower()
+                    # 商品名にクエリ文字列がそのまま含まれているか判定
+                    if search_query in item_name:
+                        matched_items.append({
+                            "name": h.get("name"),
+                            "price": h.get("price"),
+                            "url": h.get("url"),
+                            "store": h.get("seller", {}).get("name") or h.get("store", {}).get("name"),
+                            "image": h.get("image", {}).get("medium"),
+                            "description": h.get("description"),
+                            "review_rate": h.get("review", {}).get("rate"),
+                            "review_count": h.get("review", {}).get("count"),
+                            "in_stock": h.get("inStock"),
+                            "code": h.get("code"),
+                            "brand": h.get("brand", {}).get("name"),
+                            "raw": h 
+                        })
+                
+                results.append({
+                    "chateau": task["original_name"],
+                    "classification": task.get("classification"),
+                    "certification_year": task["year"],
+                    "query_used": task["query"],
+                    "hit_count": len(matched_items),
+                    "items": matched_items
+                })
 
         return {
             "classification": classification or "all",
