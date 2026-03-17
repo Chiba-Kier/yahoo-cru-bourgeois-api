@@ -13,4 +13,11 @@ terraform {
 provider "aws" {
   region  = "ap-northeast-1" # 東京リージョン
   profile = "default"        # aws configureで設定するプロファイル名
+
+  default_tags {
+    tags = {
+      Project     = var.project_name
+      Environment = var.environment
+    }
+  }
 }

@@ -2,6 +2,7 @@ from fastapi import FastAPI, Query, HTTPException, Path
 from typing import List, Dict, Any, Optional
 from modules.yahoo_client import YahooShoppingClient
 from modules.data_manager import DataManager
+from mangum import Mangum  # Add Mangum for Lambda support
 
 app = FastAPI(
     title="Wine Classification Search API",
@@ -28,9 +29,7 @@ def search_wine_classification(
     min_price: Optional[int] = Query(None, description="最低価格 (JPY)"),
     max_price: Optional[int] = Query(None, description="最高価格 (JPY)"),
 ):
-    """
-    指定した格付け、または全ての銘柄をYahoo!ショッピングで検索します。
-    """
+    # ... (existing search logic) ...
     if not yahoo_client:
         raise HTTPException(status_code=500, detail="Yahoo! Client not initialized.")
 
@@ -44,7 +43,6 @@ def search_wine_classification(
             chunk = tasks[i : i + chunk_size]
             
             # Yahoo! API の OR 検索は '|' を使用します
-            # 例: (シャトー A) | (シャトー B) | (シャトー C)
             combined_query = " | ".join([f'({t["query"]})' for t in chunk])
             
             # まとめて検索
@@ -57,14 +55,11 @@ def search_wine_classification(
             
             # 各シャトーごとに結果を振り分け
             for task in chunk:
-                # CSVの表記そのままの検索クエリを使用（小文字化のみ）
-                # 単語分割はせず、商品名にこの文字列がそのまま含まれているかを確認します
                 search_query = task["query"].lower()
                 matched_items = []
                 
                 for h in hits:
                     item_name = h.get("name", "").lower()
-                    # 商品名にクエリ文字列がそのまま含まれているか判定
                     if search_query in item_name:
                         matched_items.append({
                             "name": h.get("name"),
@@ -100,6 +95,9 @@ def search_wine_classification(
         raise HTTPException(status_code=404, detail=f"Classification '{classification}' not found.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# AWS Lambda Handler
+handler = Mangum(app, lifespan="off")
 
 if __name__ == "__main__":
     import uvicorn
