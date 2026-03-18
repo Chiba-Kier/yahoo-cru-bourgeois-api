@@ -4,25 +4,36 @@ resource "null_resource" "lambda_build" {
     requirements = filesha256("${path.module}/../requirements.txt")
     main_py      = filesha256("${path.module}/../main.py")
     modules      = sha256(join("", [for f in fileset("${path.module}/../modules", "**") : filesha256("${path.module}/../modules/${f}")]))
+    # WSLへの切り替えをトリガーにする
+    build_version = "20240318-wsl-v1" 
   }
 
   provisioner "local-exec" {
-    command = <<EOT
-      if (Test-Path "${path.module}/build") { Remove-Item -Recurse -Force "${path.module}/build" }
-      New-Item -ItemType Directory -Path "${path.module}/build"
+    working_dir = path.module
+    # WSLを使用してLinuxネイティブのビルドを行う
+    interpreter = ["wsl", "bash", "-c"]
+    command     = <<EOT
+      set -e
+      echo "Starting build in WSL..."
       
-      # 1. 依存ライブラリのインストール
-      pip install -r "${path.module}/../requirements.txt" -t "${path.module}/build"
+      # 1. ビルドディレクトリのリセット
+      rm -rf build && mkdir -p build
       
-      # 2. ソースコードのコピー
-      Copy-Item -Path "${path.module}/../main.py" -Destination "${path.module}/build/"
-      Copy-Item -Path "${path.module}/../modules" -Destination "${path.module}/build/" -Recurse
-      Copy-Item -Path "${path.module}/../data" -Destination "${path.module}/build/" -Recurse
+      # 2. 依存ライブラリのインストール
+      # WSL側に python3 および python3-pip がインストールされている必要があります
+      python3 -m pip install -t build -r ../requirements.txt --upgrade
       
-      # 3. 不要なファイルの削除（キャッシュ等）
-      Get-ChildItem -Path "${path.module}/build" -Include "__pycache__", "*.pyc" -Recurse | Remove-Item -Recurse -Force
+      # 3. ソースコードのコピー
+      cp ../main.py build/
+      cp -r ../modules build/
+      cp -r ../data build/
+      
+      # 4. 不要なファイルの削除
+      find build -name "__pycache__" -type d -exec rm -rf {} +
+      find build -name "*.pyc" -delete
+      
+      echo "Build completed successfully."
     EOT
-    interpreter = ["powershell", "-Command"]
   }
 }
 
@@ -36,7 +47,6 @@ data "archive_file" "lambda_zip" {
 }
 
 # AWS Managed Layer for Pandas (ap-northeast-1)
-# Note: The ARN might change, but this is a common one for Python 3.10
 resource "aws_lambda_function" "search_wine" {
   filename         = data.archive_file.lambda_zip.output_path
   function_name    = var.lambda_function_name
@@ -44,11 +54,11 @@ resource "aws_lambda_function" "search_wine" {
   handler          = "main.handler"
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
   runtime          = "python3.10"
-  timeout          = 900 # 15 minutes (as per design)
-  memory_size      = 512 # Sufficient for pandas
+  timeout          = 900 # 15 minutes
+  memory_size      = 512
 
   layers = [
-    "arn:aws:lambda:ap-northeast-1:336392948345:layer:AWSSDKPandas-Python310:3" # Example ARN
+    "arn:aws:lambda:ap-northeast-1:336392948345:layer:AWSSDKPandas-Python310:3"
   ]
 
   environment {
