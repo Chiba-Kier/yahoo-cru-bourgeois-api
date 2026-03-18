@@ -104,13 +104,3 @@ resource "aws_lambda_function" "reader" {
     }
   }
 }
-
-# Reader用のLambda Function URL (API Gatewayの代わり)
-resource "aws_lambda_function_url" "reader_url" {
-  function_name      = aws_lambda_function.reader.function_name
-  authorization_type = "NONE"
-  cors {
-    allow_origins = ["*"]
-    allow_methods = ["GET"]
-  }
-}

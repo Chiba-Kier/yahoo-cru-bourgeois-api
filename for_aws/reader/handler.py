@@ -45,7 +45,7 @@ def handler(event, context):
             "statusCode": 200,
             "headers": {
                 "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*" # CORS対応
+                "Access-Control-Allow-Origin": "*"
             },
             "body": json.dumps(results, ensure_ascii=False)
         }
@@ -54,6 +54,9 @@ def handler(event, context):
         print(f"Error in Reader: {e}")
         return {
             "statusCode": 500,
-            "headers": {"Content-Type": "application/json"},
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+            },
             "body": json.dumps({"error": str(e)})
         }
