@@ -2,10 +2,11 @@
 resource "aws_apigatewayv2_api" "reader_api" {
   name          = "${var.project_name}-reader-api"
   protocol_type = "HTTP"
+  
   cors_configuration {
     allow_origins = ["*"]
-    allow_methods = ["GET", "OPTIONS"]
-    allow_headers = ["*"]
+    allow_methods = ["GET", "POST", "OPTIONS"]
+    allow_headers = ["Content-Type", "Authorization", "X-Api-Key", "X-Requested-With"]
     max_age       = 300
   }
 }
