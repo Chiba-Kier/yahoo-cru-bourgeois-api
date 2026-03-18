@@ -2,6 +2,9 @@ import pandas as pd
 from typing import List, Dict, Any, Optional
 import os
 import glob
+import boto3
+import json
+from datetime import datetime
 
 class DataManager:
     def __init__(self, data_root: str = "data"):
@@ -84,6 +87,23 @@ class DataManager:
             })
             
         return tasks
+
+    def save_results_to_s3(self, results: Dict[str, Any], bucket_name: str, prefix: str = "results/"):
+        """
+        Saves the search results to an S3 bucket as a JSON file.
+        """
+        s3 = boto3.client('s3')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{prefix}{results.get('classification', 'all')}_{timestamp}.json"
+        
+        s3.put_object(
+            Bucket=bucket_name,
+            Key=filename,
+            Body=json.dumps(results, ensure_ascii=False),
+            ContentType='application/json'
+        )
+        print(f"Results saved to S3: s3://{bucket_name}/{filename}")
+        return filename
 
 if __name__ == "__main__":
     # Test with the new structure

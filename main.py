@@ -97,7 +97,38 @@ def search_wine_classification(
         raise HTTPException(status_code=500, detail=str(e))
 
 # AWS Lambda Handler
-handler = Mangum(app, lifespan="off")
+def lambda_handler(event, context):
+    """
+    Handle both direct Lambda calls (EventBridge) and HTTP requests (via Mangum).
+    """
+    import os
+    
+    # EventBridge/Direct Call Check
+    # Mangum expects specific keys; if they are missing, it's a direct invocation
+    if "httpMethod" not in event and "requestContext" not in event:
+        print(f"Direct/Scheduled execution triggered: {event}")
+        classification = event.get("classification")
+        
+        # Call the search logic directly
+        results = search_wine_classification(classification=classification)
+        
+        # Save to S3 if bucket is configured
+        bucket_name = os.environ.get("S3_BUCKET_NAME")
+        if bucket_name:
+            try:
+                data_manager.save_results_to_s3(results, bucket_name)
+            except Exception as e:
+                print(f"Failed to save results to S3: {e}")
+        
+        print(f"Search completed. Total results: {len(results.get('search_results', []))}")
+        return results
+
+    # Standard HTTP Request (API Gateway / Mangum)
+    asgi_handler = Mangum(app, lifespan="off")
+    return asgi_handler(event, context)
+
+# Set the entry point for Lambda
+handler = lambda_handler
 
 if __name__ == "__main__":
     import uvicorn
