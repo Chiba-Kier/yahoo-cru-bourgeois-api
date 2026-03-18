@@ -1,8 +1,9 @@
 # Lambda用のビルドディレクトリ作成
 resource "null_resource" "collector_build" {
   triggers = {
-    handler = filesha256("${path.module}/../collector/handler.py")
-    modules = sha256(join("", [for f in fileset("${path.module}/../modules", "**") : filesha256("${path.module}/../modules/${f}")]))
+    handler      = filesha256("${path.module}/../collector/handler.py")
+    modules      = sha256(join("", [for f in fileset("${path.module}/../modules", "**") : filesha256("${path.module}/../modules/${f}")]))
+    requirements = filesha256("${path.module}/../../requirements.txt")
   }
 
   provisioner "local-exec" {
@@ -13,6 +14,8 @@ resource "null_resource" "collector_build" {
       rm -rf build_collector && mkdir -p build_collector
       cp ../collector/handler.py build_collector/
       cp -r ../modules build_collector/
+      # 必要に応じて以下を有効化
+      # python3 -m pip install -t build_collector -r ../../requirements.txt
       echo "Collector build completed."
     EOT
   }
@@ -20,8 +23,9 @@ resource "null_resource" "collector_build" {
 
 resource "null_resource" "reader_build" {
   triggers = {
-    handler = filesha256("${path.module}/../reader/handler.py")
-    modules = sha256(join("", [for f in fileset("${path.module}/../modules", "**") : filesha256("${path.module}/../modules/${f}")]))
+    handler      = filesha256("${path.module}/../reader/handler.py")
+    modules      = sha256(join("", [for f in fileset("${path.module}/../modules", "**") : filesha256("${path.module}/../modules/${f}")]))
+    requirements = filesha256("${path.module}/../../requirements.txt")
   }
 
   provisioner "local-exec" {
@@ -32,6 +36,8 @@ resource "null_resource" "reader_build" {
       rm -rf build_reader && mkdir -p build_reader
       cp ../reader/handler.py build_reader/
       cp -r ../modules build_reader/
+      # 必要に応じて以下を有効化
+      # python3 -m pip install -t build_reader -r ../../requirements.txt
       echo "Reader build completed."
     EOT
   }

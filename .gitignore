@@ -1,5 +1,7 @@
-GEMINI.md
-docs/
+# Documentation
+docs/old/
+# docs/_build/ (keep this for sphinx if needed)
+docs/_build/
 
 # =========================
 # Terraform
