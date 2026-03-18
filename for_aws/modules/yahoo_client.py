@@ -2,19 +2,16 @@ import os
 import time
 import requests
 from typing import List, Dict, Any, Optional
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
 
 class YahooShoppingClient:
     BASE_URL = "https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch"
 
     def __init__(self, client_id: Optional[str] = None):
         # Priority: explicit arg > env var
-        self.client_id = client_id or os.getenv("YAHOO_CLIENT_ID")
+        # Note: In AWS Lambda, YAHOO_CLIENT_ID is set via environment variables.
+        self.client_id = client_id or os.environ.get("YAHOO_CLIENT_ID")
         if not self.client_id:
-            raise ValueError("YAHOO_CLIENT_ID not found in environment or .env file")
+            raise ValueError("YAHOO_CLIENT_ID not found in environment variables.")
 
     def search_items(
         self, 
