@@ -16,6 +16,12 @@ variable "lambda_function_name" {
   default     = "wine-classification-search"
 }
 
+variable "classifications" {
+  description = "List of wine classifications to search"
+  type        = list(string)
+  default     = ["medoc", "cru_bourgeois", "cru_bourgeois_top", "medoc_second_third"]
+}
+
 variable "s3_bucket_name" {
   description = "Name of the S3 bucket"
   type        = string
