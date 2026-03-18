@@ -10,12 +10,6 @@ variable "environment" {
   default     = "dev"
 }
 
-variable "lambda_function_name" {
-  description = "Name of the Lambda function"
-  type        = string
-  default     = "wine-classification-search"
-}
-
 variable "classifications" {
   description = "List of wine classifications to search"
   type        = list(string)
@@ -35,7 +29,25 @@ variable "schedule_expression" {
 }
 
 variable "yahoo_api_key" {
-  description = "Yahoo! Shopping API Key"
+  description = "Yahoo! Shopping API Key (Application ID)"
   type        = string
   sensitive   = true
+}
+
+variable "custom_domain_name" {
+  description = "The custom domain name for the Reader API (e.g., api.example.com)"
+  type        = string
+  default     = ""
+}
+
+variable "route53_zone_id" {
+  description = "The Route 53 Hosted Zone ID for the domain"
+  type        = string
+  default     = ""
+}
+
+variable "acm_certificate_arn" {
+  description = "The ARN of the ACM certificate for the custom domain (must be in the same region)"
+  type        = string
+  default     = ""
 }
