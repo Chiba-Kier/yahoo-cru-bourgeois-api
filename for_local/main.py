@@ -13,7 +13,7 @@ app = FastAPI(
 # Initialize modules
 try:
     yahoo_client = YahooShoppingClient()
-    data_manager = DataManager()
+    data_manager = DataManager(data_root="../data")
 except Exception as e:
     print(f"Initialization Error: {e}")
     yahoo_client = None

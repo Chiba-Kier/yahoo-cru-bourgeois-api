@@ -9,8 +9,9 @@ if [ -z "$BUCKET_NAME" ]; then
 fi
 
 # Get absolute path of data directory relative to script
+# Project Root: ../../data
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-DATA_DIR="$SCRIPT_DIR/../../for_local/data"
+DATA_DIR="$SCRIPT_DIR/../../data"
 
 if [ ! -d "$DATA_DIR" ]; then
     echo "Error: Data directory not found at $DATA_DIR"
