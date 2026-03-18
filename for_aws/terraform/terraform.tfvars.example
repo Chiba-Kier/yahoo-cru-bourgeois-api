@@ -1,0 +1,6 @@
+project_name        = ""
+environment         = ""
+s3_bucket_name      = ""
+yahoo_api_key       = ""
+schedule_expression = ""
+# schedule_expression = "cron(0 0 ? * 5 *)"
