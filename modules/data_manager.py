@@ -49,8 +49,8 @@ class DataManager:
                 df["source_year"] = year
                 df["classification"] = current_classification
                 
-                # Clean data
-                df = df.map(lambda x: x.strip() if isinstance(x, str) else x)
+                # Clean data (use applymap for older pandas compatibility)
+                df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
                 # Replace NaN with None for better JSON/Dictionary handling
                 df = df.replace({pd.NA: None, float('nan'): None})
                 
