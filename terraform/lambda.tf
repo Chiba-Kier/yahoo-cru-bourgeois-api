@@ -10,11 +10,11 @@ resource "null_resource" "lambda_build" {
 
   provisioner "local-exec" {
     working_dir = path.module
-    # WSLを使用してLinuxネイティブのビルドを行う
-    interpreter = ["wsl", "bash", "-c"]
+    # Linuxネイティブでビルドを行う
+    interpreter = ["/bin/bash", "-c"]
     command     = <<EOT
       set -e
-      echo "Starting build in WSL..."
+      echo "Starting build..."
       
       # 1. ビルドディレクトリのリセット
       rm -rf build && mkdir -p build
