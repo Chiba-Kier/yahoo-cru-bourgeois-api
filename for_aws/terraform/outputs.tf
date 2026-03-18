@@ -8,11 +8,6 @@ output "reader_api_gateway_url" {
   value       = aws_apigatewayv2_api.reader_api.api_endpoint
 }
 
-output "reader_function_url" {
-  description = "The direct Lambda Function URL for the Reader (for troubleshooting)"
-  value       = aws_lambda_function_url.reader_url.function_url
-}
-
 output "collector_lambda_arn" {
   description = "ARN of the Collector Lambda function"
   value       = aws_lambda_function.collector.arn
